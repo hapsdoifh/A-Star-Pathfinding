@@ -130,7 +130,7 @@ void CAStarGUIDlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 POINT mousePos;
 int state = 0,firstTime = 1;
-
+int stateBEnter = 0;
 void CAStarGUIDlg::OnPaint()
 {
 	CPaintDC MyPaint(this);
@@ -145,7 +145,7 @@ void CAStarGUIDlg::OnPaint()
 	BoardSize.y = BOARDSIZE;
 	static pos StartPos, DestPos, OriginPos;
 	static pos CurPathPos;
-	pos MouseBlockPos;
+	static pos MouseBlockPos;
 	RECT ClientSize;
 	GetClientRect(&ClientSize);
 	if (firstTime == 1) {
@@ -166,10 +166,11 @@ void CAStarGUIDlg::OnPaint()
 		OriginPos.x = StartPos.x;
 		OriginPos.y = StartPos.y;
 	}
-	else if (state == 2) {
+	else if (state == 2 && stateBEnter == 0) {
 		DestPos.x = MouseBlockPos.x;
 		DestPos.y = MouseBlockPos.y;
 		board[DestPos.y][DestPos.x].NaviState = END;
+		stateBEnter = 1;
 	}
 	else {
 		CurPathPos.x = 0;
@@ -180,7 +181,30 @@ void CAStarGUIDlg::OnPaint()
 			CurPathPos.y = StartPos.y;
 			StartPos.y = *(findFmin(board));
 			StartPos.x = *(findFmin(board) + 1);
+			if (StartPos.y == 7) {
+				StartPos.y = 7;
+			}
 			board[StartPos.y][StartPos.x].NaviState = MARKED;
+
+			POINT PixelCoordStart, PixelCoordEnd;
+			POINT BlockPlace;
+			CBrush mybrush;
+			for (int x = 0; x < BOARDSIZE; x++) {
+				for (int y = 0; y < BOARDSIZE; y++) {
+					BlockPlace.x = x;
+					BlockPlace.y = y;
+					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordStart);
+					BlockPlace.x++;
+					BlockPlace.y++;
+					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
+					COLORREF BlockColor = BoardColor(board[y][x]);
+					mybrush.CreateSolidBrush(BlockColor);
+					MyPaint.SelectObject(&mybrush);
+					Rectangle(MyPaint, PixelCoordStart.x, PixelCoordStart.y, PixelCoordEnd.x, PixelCoordEnd.y);
+					mybrush.DeleteObject();
+				}
+			}
+			Sleep(250);
 		}
 
 
@@ -190,9 +214,28 @@ void CAStarGUIDlg::OnPaint()
 			tpx = StartPos.x;
 			tpy = StartPos.y;
 			StartPos.x = board[tpy][tpx].parentX;
-			StartPos.y = board[tpy][tpx].parentY;
+			StartPos.y = board[tpy][tpx].parentY; 
+			POINT PixelCoordStart, PixelCoordEnd;
+			POINT BlockPlace;
+			CBrush mybrush;
+			for (int x = 0; x < BOARDSIZE; x++) {
+				for (int y = 0; y < BOARDSIZE; y++) {
+					BlockPlace.x = x;
+					BlockPlace.y = y;
+					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordStart);
+					BlockPlace.x++;
+					BlockPlace.y++;
+					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
+					COLORREF BlockColor = BoardColor(board[y][x]);
+					mybrush.CreateSolidBrush(BlockColor);
+					MyPaint.SelectObject(&mybrush);
+					Rectangle(MyPaint, PixelCoordStart.x, PixelCoordStart.y, PixelCoordEnd.x, PixelCoordEnd.y);
+					mybrush.DeleteObject();
+				}
+			}
 		}
 	}
+
 	POINT PixelCoordStart, PixelCoordEnd;
 	POINT BlockPlace;
 	CBrush mybrush;
@@ -200,9 +243,9 @@ void CAStarGUIDlg::OnPaint()
 		for (int y = 0; y < BOARDSIZE; y++) {
 			BlockPlace.x = x;
 			BlockPlace.y = y;
-			BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace,&PixelCoordStart);
-			BlockPlace.x ++;
-			BlockPlace.y ++;
+			BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordStart);
+			BlockPlace.x++;
+			BlockPlace.y++;
 			BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
 			COLORREF BlockColor = BoardColor(board[y][x]);
 			mybrush.CreateSolidBrush(BlockColor);
@@ -211,7 +254,7 @@ void CAStarGUIDlg::OnPaint()
 			mybrush.DeleteObject();
 		}
 	}
-	
+
 	CString Str;
 	RECT textRect;
 	textRect.top = 200;

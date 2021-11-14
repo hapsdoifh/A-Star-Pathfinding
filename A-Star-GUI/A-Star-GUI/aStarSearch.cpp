@@ -20,7 +20,7 @@ int MarkAvail(grid board[BOARDSIZE][BOARDSIZE], pos mypos, pos destpos, pos Prev
     int boxY = y + 3;
     for (y = mypos.y - 1; y < boxY; y++) {
         for (x = mypos.x - 1; x < boxX; x++) {
-            if (x >= 0 && y >= 0) {
+            if (x >= 0 && y >= 0 && x<BOARDSIZE && y<BOARDSIZE) {
                 if (board[y][x].NaviState == EMPTY || board[y][x].NaviState == END) {
                     board[y][x].NaviState = NEXT;
                     board[y][x].parentX = mypos.x;

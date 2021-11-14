@@ -1,6 +1,6 @@
 
 
-#define BOARDSIZE 8
+#define BOARDSIZE 15
 
 #define EMPTY 0
 #define MARKED 1
