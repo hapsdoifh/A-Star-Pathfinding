@@ -176,14 +176,14 @@ void CAStarGUIDlg::OnPaint()
 		CurPathPos.x = 0;
 		CurPathPos.y = 0;
 		while (StartPos.x != DestPos.x || StartPos.y != DestPos.y) {
+			if (StartPos.y == 7) {
+				StartPos.y = 7;
+			}
 			MarkAvail(board, StartPos, DestPos, CurPathPos);
 			CurPathPos.x = StartPos.x;
 			CurPathPos.y = StartPos.y;
 			StartPos.y = *(findFmin(board));
 			StartPos.x = *(findFmin(board) + 1);
-			if (StartPos.y == 7) {
-				StartPos.y = 7;
-			}
 			board[StartPos.y][StartPos.x].NaviState = MARKED;
 
 			POINT PixelCoordStart, PixelCoordEnd;
@@ -202,9 +202,22 @@ void CAStarGUIDlg::OnPaint()
 					MyPaint.SelectObject(&mybrush);
 					Rectangle(MyPaint, PixelCoordStart.x, PixelCoordStart.y, PixelCoordEnd.x, PixelCoordEnd.y);
 					mybrush.DeleteObject();
+					CString Str;
+					RECT textRect;
+					textRect.top = PixelCoordStart.y;
+					textRect.bottom = PixelCoordEnd.y;
+					textRect.left = PixelCoordStart.x;
+					textRect.right = PixelCoordEnd.x;
+					if (board[y][x].NaviState != EMPTY) {
+						Str.Format(_T("px:%d"), board[y][x].parentX);
+						DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
+						Str.Format(_T("pY:%d"), board[y][x].parentY);
+						textRect.top = PixelCoordStart.y + 20;
+						DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
+					}
 				}
 			}
-			Sleep(250);
+			Sleep(50);
 		}
 
 
@@ -215,24 +228,7 @@ void CAStarGUIDlg::OnPaint()
 			tpy = StartPos.y;
 			StartPos.x = board[tpy][tpx].parentX;
 			StartPos.y = board[tpy][tpx].parentY; 
-			POINT PixelCoordStart, PixelCoordEnd;
-			POINT BlockPlace;
-			CBrush mybrush;
-			for (int x = 0; x < BOARDSIZE; x++) {
-				for (int y = 0; y < BOARDSIZE; y++) {
-					BlockPlace.x = x;
-					BlockPlace.y = y;
-					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordStart);
-					BlockPlace.x++;
-					BlockPlace.y++;
-					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
-					COLORREF BlockColor = BoardColor(board[y][x]);
-					mybrush.CreateSolidBrush(BlockColor);
-					MyPaint.SelectObject(&mybrush);
-					Rectangle(MyPaint, PixelCoordStart.x, PixelCoordStart.y, PixelCoordEnd.x, PixelCoordEnd.y);
-					mybrush.DeleteObject();
-				}
-			}
+			
 		}
 	}
 
@@ -252,17 +248,22 @@ void CAStarGUIDlg::OnPaint()
 			MyPaint.SelectObject(&mybrush);
 			Rectangle(MyPaint, PixelCoordStart.x, PixelCoordStart.y, PixelCoordEnd.x, PixelCoordEnd.y);
 			mybrush.DeleteObject();
+			CString Str;
+			RECT textRect;
+			textRect.top = PixelCoordStart.y;
+			textRect.bottom = PixelCoordEnd.y;
+			textRect.left = PixelCoordStart.x;
+			textRect.right = PixelCoordEnd.x;
+			if (board[y][x].NaviState != EMPTY) {
+				Str.Format(_T("px:%d"), board[y][x].parentX);
+				DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
+				Str.Format(_T("pY:%d"), board[y][x].parentY);
+				textRect.top = PixelCoordStart.y + 20;
+				DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
+			}
 		}
 	}
 
-	CString Str;
-	RECT textRect;
-	textRect.top = 200;
-	textRect.bottom = 300;
-	textRect.right = 300;
-	textRect.left = 200;
-	Str.Format(_T("%d"), state);
-	DrawText(MyPaint, Str, 1, &textRect, DT_BOTTOM);
 	if (IsIconic())
 	{
 		CPaintDC dc(this); // device context for painting
