@@ -242,7 +242,6 @@ void CAStarGUIDlg::OnPaint()
 			}
 			Sleep(100);
 		}
-
 		int tpx, tpy;
 		while (StartPos.x != OriginPos.x || StartPos.y != OriginPos.y) {
 			board[StartPos.y][StartPos.x].NaviState = SUCCESS;
@@ -257,6 +256,7 @@ void CAStarGUIDlg::OnPaint()
 	RECT PixelRect;
 	POINT BlockPlace;
 	CBrush mybrush;
+	CPen BoardPen;
 	for (int x = 0; x < BOARDSIZE; x++) {
 		for (int y = 0; y < BOARDSIZE; y++) {
 			BlockPlace.x = x;
@@ -267,24 +267,41 @@ void CAStarGUIDlg::OnPaint()
 			//BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
 			COLORREF BlockColor = BoardColor(board[y][x]);
 			mybrush.CreateSolidBrush(BlockColor);
+			BoardPen.CreatePen(PS_SOLID, 1, RGB(50, 50, 50));
 			MyPaint.SelectObject(&mybrush);
+			MyPaint.SelectObject(&BoardPen);
 			Rectangle(MyPaint, PixelRect.left, PixelRect.top, PixelRect.right, PixelRect.bottom);
 			mybrush.DeleteObject();
+			BoardPen.DeleteObject();
 			CString Str;
 			RECT textRect;
 			textRect.top = PixelRect.top;
 			textRect.bottom = PixelRect.bottom;
 			textRect.left = PixelRect.left;
-			textRect.right = PixelRect.right;/*
-			if (board[y][x].NaviState != EMPTY) {
-				Str.Format(_T("px:%d"), board[y][x].parentX);
-				DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
-				Str.Format(_T("pY:%d"), board[y][x].parentY);
+			textRect.right = PixelRect.right;
+			if (board[y][x].NaviState != EMPTY && board[y][x].NaviState != WALL) {
+				RECT PRrect;
+				CPen myPen;
+				myPen.CreatePen(PS_SOLID, 4, RGB(0, 0, 0));
+				MyPaint.SelectObject(&myPen);
+				POINT CurCenter, PrCenter;
+				BlockPlace.x = board[y][x].parentX;
+				BlockPlace.y = board[y][x].parentY;
+				BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PRrect);
+				CurCenter.x = (PixelRect.right + PixelRect.left) / 2;
+				CurCenter.y = (PixelRect.top + PixelRect.bottom) / 2;
+				MoveToEx(MyPaint, CurCenter.x, CurCenter.y, 0);
+				PrCenter.x = (PRrect.left + PRrect.right) / 2;
+				PrCenter.y = (PRrect.top + PRrect.bottom) / 2;
+				MyPaint.LineTo((CurCenter.x + PrCenter.x) / 2, (CurCenter.y + PrCenter.y) / 2);
+				Str.Format(_T("Dst:%3f"), board[y][x].Hval + board[y][x].Gval);
 				textRect.top = PixelRect.top + 20;
-				DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
-			}*/
+				//DrawText(MyPaint, Str, 7, &textRect, DT_BOTTOM);
+				myPen.DeleteObject();
+			}
 		}
 	}
+	Sleep(100);
 
 	if (IsIconic())
 	{
