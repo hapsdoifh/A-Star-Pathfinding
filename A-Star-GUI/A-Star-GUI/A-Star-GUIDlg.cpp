@@ -7,7 +7,6 @@
 #include "A-Star-GUI.h"
 #include "A-Star-GUIDlg.h"
 #include "afxdialogex.h"
-
 #include "aStarSearch.h"
 
 #ifdef _DEBUG
@@ -70,6 +69,8 @@ BEGIN_MESSAGE_MAP(CAStarGUIDlg, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CAStarGUIDlg::OnBnClickedOk)
 	ON_WM_LBUTTONDOWN()
 	ON_BN_CLICKED(IDC_BUTTON1, &CAStarGUIDlg::OnBnClickedSwitch)
+	ON_WM_MOUSEMOVE()
+	ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
 
@@ -129,6 +130,7 @@ void CAStarGUIDlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 
 POINT mousePos;
+POINT UpdateRectSize;
 int state = 0,firstTime = 1;
 int stateBEnter = 0;
 void CAStarGUIDlg::OnPaint()
@@ -148,6 +150,10 @@ void CAStarGUIDlg::OnPaint()
 	static pos MouseBlockPos;
 	RECT ClientSize;
 	GetClientRect(&ClientSize);
+
+	UpdateRectSize.x = ClientSize.right / BoardSize.x*2;
+	UpdateRectSize.y = ClientSize.bottom / BoardSize.y*2;
+
 	if (firstTime == 1) {
 		memset(&StartPos, 0, sizeof(StartPos));
 		memset(&DestPos, 0, sizeof(DestPos));
@@ -182,44 +188,60 @@ void CAStarGUIDlg::OnPaint()
 			MarkAvail(board, StartPos, DestPos, CurPathPos);
 			CurPathPos.x = StartPos.x;
 			CurPathPos.y = StartPos.y;
+			board[StartPos.y][StartPos.x].NaviState = MARKED;
 			StartPos.y = *(findFmin(board));
 			StartPos.x = *(findFmin(board) + 1);
-			board[StartPos.y][StartPos.x].NaviState = MARKED;
-
-			POINT PixelCoordStart, PixelCoordEnd;
+			board[StartPos.y][StartPos.x].NaviState = CURSEL;
+			RECT PixelRect;
 			POINT BlockPlace;
 			CBrush mybrush;
+			CPen BoardPen;
 			for (int x = 0; x < BOARDSIZE; x++) {
 				for (int y = 0; y < BOARDSIZE; y++) {
 					BlockPlace.x = x;
 					BlockPlace.y = y;
-					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordStart);
-					BlockPlace.x++;
-					BlockPlace.y++;
-					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
+					BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelRect);
+					//BlockPlace.x++;
+					//BlockPlace.y++;
+					//BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
 					COLORREF BlockColor = BoardColor(board[y][x]);
 					mybrush.CreateSolidBrush(BlockColor);
+					BoardPen.CreatePen(PS_SOLID, 1, RGB(50, 50, 50));
 					MyPaint.SelectObject(&mybrush);
-					Rectangle(MyPaint, PixelCoordStart.x, PixelCoordStart.y, PixelCoordEnd.x, PixelCoordEnd.y);
+					MyPaint.SelectObject(&BoardPen);
+					Rectangle(MyPaint, PixelRect.left, PixelRect.top, PixelRect.right, PixelRect.bottom);
 					mybrush.DeleteObject();
+					BoardPen.DeleteObject();
 					CString Str;
 					RECT textRect;
-					textRect.top = PixelCoordStart.y;
-					textRect.bottom = PixelCoordEnd.y;
-					textRect.left = PixelCoordStart.x;
-					textRect.right = PixelCoordEnd.x;
-					if (board[y][x].NaviState != EMPTY) {
-						Str.Format(_T("px:%d"), board[y][x].parentX);
-						DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
-						Str.Format(_T("pY:%d"), board[y][x].parentY);
-						textRect.top = PixelCoordStart.y + 20;
-						DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
+					textRect.top = PixelRect.top;
+					textRect.bottom = PixelRect.bottom;
+					textRect.left = PixelRect.left;
+					textRect.right = PixelRect.right;
+					if (board[y][x].NaviState != EMPTY && board[y][x].NaviState != WALL) {
+						RECT PRrect;
+						CPen myPen;
+						myPen.CreatePen(PS_SOLID, 4, RGB(0, 0, 0));
+						MyPaint.SelectObject(&myPen);
+						POINT CurCenter, PrCenter;
+						BlockPlace.x = board[y][x].parentX;
+						BlockPlace.y = board[y][x].parentY;
+						BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PRrect);
+						CurCenter.x = (PixelRect.right + PixelRect.left) / 2;
+						CurCenter.y = (PixelRect.top + PixelRect.bottom) / 2;
+						MoveToEx(MyPaint, CurCenter.x, CurCenter.y, 0);
+						PrCenter.x = (PRrect.left + PRrect.right) / 2;
+						PrCenter.y = (PRrect.top + PRrect.bottom) / 2;
+						MyPaint.LineTo((CurCenter.x+PrCenter.x)/2, (CurCenter.y + PrCenter.y) / 2);
+						Str.Format(_T("Dst:%3f"), board[y][x].Hval+ board[y][x].Gval);
+						textRect.top = PixelRect.top + 20;
+						//DrawText(MyPaint, Str, 7, &textRect, DT_BOTTOM);
+						myPen.DeleteObject();
 					}
 				}
 			}
-			Sleep(50);
+			Sleep(100);
 		}
-
 
 		int tpx, tpy;
 		while (StartPos.x != OriginPos.x || StartPos.y != OriginPos.y) {
@@ -232,35 +254,35 @@ void CAStarGUIDlg::OnPaint()
 		}
 	}
 
-	POINT PixelCoordStart, PixelCoordEnd;
+	RECT PixelRect;
 	POINT BlockPlace;
 	CBrush mybrush;
 	for (int x = 0; x < BOARDSIZE; x++) {
 		for (int y = 0; y < BOARDSIZE; y++) {
 			BlockPlace.x = x;
 			BlockPlace.y = y;
-			BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordStart);
-			BlockPlace.x++;
-			BlockPlace.y++;
-			BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
+			BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelRect);
+			//BlockPlace.x++;
+			//BlockPlace.y++;
+			//BlockCoord(ClientSize, BoardSize.x, BoardSize.y, BlockPlace, &PixelCoordEnd);
 			COLORREF BlockColor = BoardColor(board[y][x]);
 			mybrush.CreateSolidBrush(BlockColor);
 			MyPaint.SelectObject(&mybrush);
-			Rectangle(MyPaint, PixelCoordStart.x, PixelCoordStart.y, PixelCoordEnd.x, PixelCoordEnd.y);
+			Rectangle(MyPaint, PixelRect.left, PixelRect.top, PixelRect.right, PixelRect.bottom);
 			mybrush.DeleteObject();
 			CString Str;
 			RECT textRect;
-			textRect.top = PixelCoordStart.y;
-			textRect.bottom = PixelCoordEnd.y;
-			textRect.left = PixelCoordStart.x;
-			textRect.right = PixelCoordEnd.x;
+			textRect.top = PixelRect.top;
+			textRect.bottom = PixelRect.bottom;
+			textRect.left = PixelRect.left;
+			textRect.right = PixelRect.right;/*
 			if (board[y][x].NaviState != EMPTY) {
 				Str.Format(_T("px:%d"), board[y][x].parentX);
 				DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
 				Str.Format(_T("pY:%d"), board[y][x].parentY);
-				textRect.top = PixelCoordStart.y + 20;
+				textRect.top = PixelRect.top + 20;
 				DrawText(MyPaint, Str, 4, &textRect, DT_BOTTOM);
-			}
+			}*/
 		}
 	}
 
@@ -302,11 +324,18 @@ void CAStarGUIDlg::OnBnClickedOk()
 	CDialogEx::OnOK();
 }
 
+int ldown = 0;
 
 void CAStarGUIDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
+	RECT UpdateRect;
 	GetCursorPos(&mousePos);
 	ScreenToClient(&mousePos);
+	ldown = 1;
+	UpdateRect.top = mousePos.y - UpdateRectSize.y / 2;
+	UpdateRect.left = mousePos.x - UpdateRectSize.x / 2;
+	UpdateRect.bottom = mousePos.y + UpdateRectSize.y / 2;
+	UpdateRect.right = mousePos.x + UpdateRectSize.x / 2;
 	this->Invalidate();
 	// TODO: Add your message handler code here and/or call default
 
@@ -320,4 +349,29 @@ void CAStarGUIDlg::OnBnClickedSwitch()
 		state++;
 	}
 	// TODO: Add your control notification handler code here
+}
+
+
+void CAStarGUIDlg::OnMouseMove(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (ldown == 1 && state ==0) {
+		GetCursorPos(&mousePos);
+		ScreenToClient(&mousePos);
+		RECT UpdateRect;
+		UpdateRect.top = mousePos.y - UpdateRectSize.y / 2;
+		UpdateRect.left = mousePos.x - UpdateRectSize.x / 2;
+		UpdateRect.bottom = mousePos.y + UpdateRectSize.y / 2;
+		UpdateRect.right = mousePos.x + UpdateRectSize.x / 2;
+		this->InvalidateRect(&UpdateRect);
+	}
+	CDialogEx::OnMouseMove(nFlags, point);
+}
+
+
+void CAStarGUIDlg::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	ldown = 0;
+	CDialogEx::OnLButtonUp(nFlags, point);
 }

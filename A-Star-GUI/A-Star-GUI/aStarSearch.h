@@ -1,7 +1,7 @@
 
 
 #define BOARDSIZE 15
-
+#define CURSEL 100
 #define EMPTY 0
 #define MARKED 1
 #define NEXT 2
@@ -30,4 +30,4 @@ int MarkAvail(grid board[BOARDSIZE][BOARDSIZE], pos mypos, pos destpos, pos Prev
 int* findFmin(grid board[BOARDSIZE][BOARDSIZE]);
 pos CoordBlock(POINT Coord, RECT ClientRect, pos GridSize);
 COLORREF BoardColor(grid block);
-int BlockCoord(RECT ClientRect, int Hblock, int Vblock, POINT BlockPlace, POINT* PixelCoord);
+int BlockCoord(RECT ClientRect, int Hblock, int Vblock, POINT BlockPlace, RECT* PixelCoord);
