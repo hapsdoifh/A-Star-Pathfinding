@@ -47,6 +47,7 @@ int MarkAvail(grid board[BOARDSIZE][BOARDSIZE], pos mypos, pos destpos, pos Prev
                         if (board[y][x].Gval > (board[mypos.y][mypos.x].Gval + distDiff)) {
                             board[y][x].parentX = mypos.x;
                             board[y][x].parentY = mypos.y;
+                            board[y][x].Gval = board[mypos.y][mypos.x].Gval + distDiff;
                         }
                     }
                 }
