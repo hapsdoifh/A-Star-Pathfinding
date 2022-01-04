@@ -1,6 +1,6 @@
 
 
-#define BOARDSIZE 15
+#define BOARDSIZE 20
 #define CURSEL 100
 #define EMPTY 0
 #define MARKED 1

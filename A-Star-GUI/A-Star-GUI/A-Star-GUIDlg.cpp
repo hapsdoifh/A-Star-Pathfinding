@@ -240,7 +240,7 @@ void CAStarGUIDlg::OnPaint()
 					}
 				}
 			}
-			Sleep(100);
+			//Sleep(100);
 		}
 		int tpx, tpy;
 		while (StartPos.x != OriginPos.x || StartPos.y != OriginPos.y) {
@@ -301,7 +301,6 @@ void CAStarGUIDlg::OnPaint()
 			}
 		}
 	}
-	Sleep(100);
 
 	if (IsIconic())
 	{
